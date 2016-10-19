@@ -4,7 +4,7 @@ After=syslog.target
 
 [Service]
 Type=forking
-ExecStart=/usr/sbin/shinken-poller -d -c /etc/shinken/daemons/pollerd.ini
+ExecStart=/usr/bin/shinken-poller -d -c /etc/shinken/daemons/pollerd.ini
 KillMode=mixed
 TimeoutStopSec=30
 PIDFile=/var/run/shinken/pollerd.pid
