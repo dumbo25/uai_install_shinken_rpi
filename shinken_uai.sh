@@ -160,6 +160,14 @@ then
 	exit $?
 fi
 
+echo "ShinkenUAI: Make shinken start on reboot"
+update-rc.d shinken defaults
+if [ $? -ne 0 ]
+then
+	echo "ShinkenUAI: Error: Failed to make shinken start on reboot"
+	exit $?
+fi
+
 echo "ShinkenUAI: Instructable step: Setup and configure sqlite3"
 echo "ShinkenUAI: Install sqlitedb"
 sudo shinken install sqlitedb
