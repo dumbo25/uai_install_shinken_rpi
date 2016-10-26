@@ -255,10 +255,6 @@ fi
 sudo sed -i -e 's/auth-cfg-password,sqlitedb             auth-cfg-password/auth-cfg-password,sqlitedb/g' /etc/shinken/modules/webui.cfg
 
 
-# STOPPED HERE = ABOVE SHOULD BE MOSTLY COMPLETE
-??? what else needs to be done ???
-# ADD MORE ABOVE - REMOVE THIS LINE WHEN DONE
-
 echo "ShinkenUAI: Restart shinken"
 sudo /etc/init.d/shinken restart
 
