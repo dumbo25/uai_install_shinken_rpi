@@ -58,7 +58,7 @@ then
 	exit $?
 fi
 
-echo "ShinkenUAI: Remove old packages that are no longer required
+echo "ShinkenUAI: Remove old packages that are no longer required"
 sudo apt-get autoremove -y
 if [ $? -ne 0 ]
 then
