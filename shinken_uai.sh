@@ -8,15 +8,23 @@
 username="pi"
 password="raspberry"
 homedir="/home/pi"
+# On dietpi UID: root = 0, pi = 1000
+userid=1000
 
 clear
 echo "ShinkenUAI: Starting unattended install of shinken on a Rasppberry Pi"
 echo "ShinkenUAI: shinken requires DietPi or raspbian"
 echo "ShinkenUAI: shinken requires user: $username and password: $password"
 
-# shinken doesn't seem to care if init.d or systemd is used, both can be active
+if [ $UID -ne "$userid" ] 
+then
+	echo -e "ShinkenUAI: Error: Run script as pi using: bash ./shinken_uai.sh "
+	exit
+fi
+
+# shinken does not care if init.d or systemd is used. systemd starts shinken's init.d
 # systemd is recommended over init.d on raspbian
-# need to update to systemd
+# Future: update to systemd
 # i=$(ps -p 1 -o comm=)
 # if [ $i = "systemd" ] 
 # then
@@ -116,6 +124,7 @@ else
 	exit $?
 fi
 
+
 echo "ShinkenUAI: Use pip to install shinken"
 sudo pip install shinken 
 if [ $? -ne 0 ]
@@ -134,7 +143,7 @@ fi
 
 echo "ShinkenUAI: Instructable step: Initialize and start shinken"
 echo "ShinkenUAI: Initialize shinken"
-sudo mkdir var/log/shinken
+sudo mkdir /var/log/shinken
 sudo chmod 777 /var/log/shinken
 sudo service shinken stop
 sudo shinken --init
@@ -160,13 +169,14 @@ then
 	exit $?
 fi
 
-echo "ShinkenUAI: Make shinken start on reboot"
+echo "ShinkenUAI: Ensure shinken starts on reboot"
 update-rc.d shinken defaults
 if [ $? -ne 0 ]
 then
-	echo "ShinkenUAI: Error: Failed to make shinken start on reboot"
-	exit $?
+        echo "ShinkenUAI: Error: Failed to make shinken start on Raspberry Pi reboot"
+        exit $?
 fi
+
 
 echo "ShinkenUAI: Instructable step: Setup and configure sqlite3"
 echo "ShinkenUAI: Install sqlitedb"
@@ -178,17 +188,19 @@ then
 fi
 
 # In many installations, the module name is SQLitedb - this won't work
+echo "ShinkenUAI: Create sqlitedb config file"
 {
   echo '  ## Module:      SQLite'
   echo '  ## Loaded by:   WebUI'
   echo '  # In WebUI: Save/read user preferences'
   echo '  define module {'
-  echo '    module_name     sqlitedb'
+  echo '    module_name     SQLitedb'
   echo '    module_type     sqlitedb'
   echo '    uri             /var/lib/shinken/webui.db'
   echo '}'
 } > /etc/shinken/modules/sqlitedb.cfg
 sudo chmod 666 /etc/shinken/modules/sqlitedb.cfg
+
 
 echo "ShinkenUAI: Instructable step: Install shinken Web UI"
 echo "ShinkenUAI: Search webui"
@@ -207,7 +219,6 @@ then
 	exit $?
 fi
 
-
 echo "ShinkenUAI: Overwrite CHANGE_ME with mypassword"
 sudo sed -i -e 's/CHANGE_ME/mypassword/g' /etc/shinken/modules/webui.cfg
 if [ $? -ne 0 ]
@@ -225,6 +236,7 @@ then
 fi
 # if webui was added twice remove second one
 sudo sed -i -e 's/webui webui/webui/g' /etc/shinken/brokers/broker-master.cfg
+
 
 echo "ShinkenUAI: Restart shinken"
 sudo /etc/init.d/shinken restart
@@ -255,22 +267,23 @@ fi
 sudo sed -i -e 's/auth-cfg-password,sqlitedb             auth-cfg-password/auth-cfg-password,sqlitedb/g' /etc/shinken/modules/webui.cfg
 
 
+echo "ShinkenUAI: Check everything one last time."
 echo "ShinkenUAI: Restart shinken"
 sudo /etc/init.d/shinken restart
 
-# echo "ShinkenUAI: Verify shinken is configured properly"
-# /usr/bin/shinken-arbiter -v -c /etc/shinken/shinken.cfg
-# if [ $? -ne 0 ]
-# then
-# 	echo "ShinkenUAI: Error: Shinken is not configured properly"
-# 	exit $?
-# fi
-
+echo "ShinkenUAI: Verify shinken is configured properly"
+/usr/bin/shinken-arbiter -v -c /etc/shinken/shinken.cfg
+if [ $? -ne 0 ]
+then
+	echo "ShinkenUAI: Error: Shinken is not configured properly"
+	exit $?
+fi
 
 echo -e "shinken successfully installed!\n"
 echo "ShinkenUAI: Reboot Raspberry Pi with command: sudo reboot"
 echo "ShinkenUAI: Open browser on laptop and enter the following in URL:"
-echo "ShinkenUAI:    http://?raspberry-pi-ip?:7767"
-echo "ShinkenUAI: Login using: admin, <your_raspberry_pi_password>"
+echo "ShinkenUAI:    http://<your-raspberry-pi-ip>:7767"
+echo "ShinkenUAI: Login using: admin, <your-raspberry-pi-password>"
 
 exit 0
+
