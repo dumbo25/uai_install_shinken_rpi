@@ -161,16 +161,9 @@ then
 	exit $?
 fi
 
-echo "ShinkenUAI: Verify shinken is configured properly"
-/usr/bin/shinken-arbiter -v -c /etc/shinken/shinken.cfg
-if [ $? -ne 0 ]
-then
-	echo "ShinkenUAI: Error: Shinken is not configured properly"
-	exit $?
-fi
 
 echo "ShinkenUAI: Ensure shinken starts on reboot"
-update-rc.d shinken defaults
+sudo update-rc.d shinken defaults
 if [ $? -ne 0 ]
 then
         echo "ShinkenUAI: Error: Failed to make shinken start on Raspberry Pi reboot"
@@ -188,17 +181,21 @@ then
 fi
 
 # In many installations, the module name is SQLitedb - this won't work
+sudo rm /etc/shinken/modules/sqlitedb.cfg
+sudo cp /etc/shinken/modules/sample.cfg /etc/shinken/modules/sqlitedb.cfg
+sudo chmod 666 /etc/shinken/modules/sqlitedb.cfg
+sudo chown shinken /etc/shinken/modules/*
+sudo chgrp shinken /etc/shinken/modules/*
 echo "ShinkenUAI: Create sqlitedb config file"
+sudo bash <<EOF
 {
-  echo '  ## Module:      SQLite'
-  echo '  ## Loaded by:   WebUI'
-  echo '  # In WebUI: Save/read user preferences'
   echo '  define module {'
-  echo '    module_name     SQLitedb'
+  echo '    module_name     sqlitedb'
   echo '    module_type     sqlitedb'
   echo '    uri             /var/lib/shinken/webui.db'
   echo '}'
 } > /etc/shinken/modules/sqlitedb.cfg
+EOF
 sudo chmod 666 /etc/shinken/modules/sqlitedb.cfg
 
 
@@ -286,4 +283,3 @@ echo "ShinkenUAI:    http://<your-raspberry-pi-ip>:7767"
 echo "ShinkenUAI: Login using: admin, <your-raspberry-pi-password>"
 
 exit 0
-
